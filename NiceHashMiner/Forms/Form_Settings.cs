@@ -461,6 +461,8 @@ namespace NiceHashMiner.Forms
                 checkBox_MinimizeMiningWindows.CheckedChanged += GeneralCheckBoxes_CheckedChanged;
                 checkBox_UseIFTTT.CheckedChanged += CheckBox_UseIFTTT_CheckChanged;
                 checkBox_RunScriptOnCUDA_GPU_Lost.CheckedChanged += GeneralCheckBoxes_CheckedChanged;
+                checkBox_DisableForVR.CheckedChanged += GeneralCheckBoxes_CheckedChanged;
+                checkBox_DisableForLightmass.CheckedChanged += GeneralCheckBoxes_CheckedChanged;
             }
             // Add EventHandler for all the general tab's textboxes
             {
@@ -519,6 +521,8 @@ namespace NiceHashMiner.Forms
             {
                 checkBox_DebugConsole.Checked = ConfigManager.GeneralConfig.DebugConsole;
                 checkBox_AutoStartMining.Checked = ConfigManager.GeneralConfig.AutoStartMining;
+                checkBox_DisableForVR.Checked = ConfigManager.GeneralConfig.DisableWhileInVR;
+                checkBox_DisableForLightmass.Checked = ConfigManager.GeneralConfig.DisableWhileUnrealLightmassRunning;
                 checkBox_HideMiningWindows.Checked = ConfigManager.GeneralConfig.HideMiningWindows;
                 checkBox_MinimizeToTray.Checked = ConfigManager.GeneralConfig.MinimizeToTray;
                 checkBox_DisableDetectionNVIDIA.Checked =
@@ -654,6 +658,8 @@ namespace NiceHashMiner.Forms
             ConfigManager.GeneralConfig.DeviceDetection.DisableDetectionAMD = checkBox_DisableDetectionAMD.Checked;
             ConfigManager.GeneralConfig.AutoScaleBTCValues = checkBox_AutoScaleBTCValues.Checked;
             ConfigManager.GeneralConfig.StartMiningWhenIdle = checkBox_StartMiningWhenIdle.Checked;
+            ConfigManager.GeneralConfig.DisableWhileInVR = checkBox_DisableForVR.Checked;
+            ConfigManager.GeneralConfig.DisableWhileUnrealLightmassRunning = checkBox_DisableForLightmass.Checked;
             ConfigManager.GeneralConfig.ShowDriverVersionWarning = checkBox_ShowDriverVersionWarning.Checked;
             ConfigManager.GeneralConfig.DisableWindowsErrorReporting = checkBox_DisableWindowsErrorReporting.Checked;
             ConfigManager.GeneralConfig.ShowInternetConnectionWarning = checkBox_ShowInternetConnectionWarning.Checked;

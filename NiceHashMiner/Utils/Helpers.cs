@@ -8,6 +8,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Management;
 
+using System.ComponentModel;
+using System.Timers;
+
 namespace NiceHashMiner
 {
     internal class Helpers : PInvokeHelpers
@@ -38,7 +41,7 @@ namespace NiceHashMiner
                 Debug.WriteLine("[" + DateTime.Now.ToLongTimeString() + "] [" + grp + "] " + text);
 #endif
 #if !DEBUG
-            Console.WriteLine("[" +DateTime.Now.ToLongTimeString() + "] [" + grp + "] " + text);
+                Console.WriteLine("[" + DateTime.Now.ToLongTimeString() + "] [" + grp + "] " + text);
 #endif
 
                 if (ConfigManager.GeneralConfig.LogToFile && Logger.IsInit)
@@ -69,11 +72,37 @@ namespace NiceHashMiner
 
         public static uint GetIdleTime()
         {
-            var lastInPut = new LASTINPUTINFO();
-            lastInPut.cbSize = (uint) System.Runtime.InteropServices.Marshal.SizeOf(lastInPut);
-            GetLastInputInfo(ref lastInPut);
+            return ((uint)Environment.TickCount - GetLastInputTime());
+        }
 
-            return ((uint) Environment.TickCount - lastInPut.dwTime);
+        public static uint GetLastInputTime()
+        {
+            var lastInPut = new LASTINPUTINFO();
+            lastInPut.cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(lastInPut);
+            lastInPut.dwTime = 0;
+
+            if (GetLastInputInfo(ref lastInPut))
+            {
+                return lastInPut.dwTime;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        public static bool IsCompInVR()
+        {
+            
+            var curFile = "c:\\Atlas Bay VR\\ABVR.vr";
+            return (System.IO.File.Exists(curFile) && ConfigManager.GeneralConfig.DisableWhileInVR);
+        }
+
+        public static bool IsLightmassRunning()
+        {
+            var pname = Process.GetProcessesByName("unreallightmass");
+
+            return (pname.Length != 0 && ConfigManager.GeneralConfig.DisableWhileUnrealLightmassRunning);
         }
 
         public static void DisableWindowsErrorReporting(bool en)
@@ -92,7 +121,7 @@ namespace NiceHashMiner
                         var o = rk.GetValue("DontShowUI");
                         if (o != null)
                         {
-                            var val = (int) o;
+                            var val = (int)o;
                             ConsolePrint("NICEHASH", "Current DontShowUI value: " + val);
 
                             if (val == 0 && en)
@@ -164,7 +193,7 @@ namespace NiceHashMiner
             var serial = "";
             foreach (ManagementObject mo in moc)
             {
-                serial = (string) mo["SerialNumber"];
+                serial = (string)mo["SerialNumber"];
             }
 
             return serial;
@@ -239,7 +268,7 @@ namespace NiceHashMiner
             using (var ndpKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32)
                 .OpenSubKey("SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full\\"))
             {
-                return ndpKey?.GetValue("Release") != null && Is45DotVersion((int) ndpKey.GetValue("Release"));
+                return ndpKey?.GetValue("Release") != null && Is45DotVersion((int)ndpKey.GetValue("Release"));
             }
         }
 

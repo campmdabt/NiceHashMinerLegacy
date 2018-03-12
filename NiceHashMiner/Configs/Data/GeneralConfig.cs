@@ -22,6 +22,8 @@ namespace NiceHashMiner.Configs.Data
         public bool MinimizeToTray = false;
 
         public bool MinimizeMiningWindows = false;
+        public bool DisableWhileInVR = true;
+        public bool DisableWhileUnrealLightmassRunning = true;
 
         //public int LessThreads;
         public CpuExtensionType ForceCPUExtension = CpuExtensionType.Automatic;
@@ -115,6 +117,8 @@ namespace NiceHashMiner.Configs.Data
             DisableDefaultOptimizations = false;
             AutoScaleBTCValues = true;
             StartMiningWhenIdle = false;
+            DisableWhileInVR = true;
+            DisableWhileUnrealLightmassRunning = true;
             LogToFile = true;
             LogMaxFileSize = 1048576;
             ShowDriverVersionWarning = true;

@@ -56,8 +56,20 @@ namespace NiceHashMiner
         private readonly int _mainFormHeight = 0;
         private readonly int _emtpyGroupPanelHeight = 0;
 
+        private uint _lastInputTime = 0;
+        private uint _ABVRLastInputTime = 0;
+        private int _numInputsInDur = 0;
+        private int _multiInteractionLoopCounter = 0;
+
         public Form_Main()
         {
+            if (ConfigManager.GeneralConfig.MinimizeToTray)
+            {
+                //ABVR - minimize to tray
+                WindowState = FormWindowState.Minimized;
+                Hide(); // this doesn't do anything - only seems to work after loading is complete
+            }
+            
             InitializeComponent();
             Icon = Properties.Resources.logo;
 
@@ -198,36 +210,225 @@ namespace NiceHashMiner
 
             _idleCheck = new Timer();
             _idleCheck.Tick += IdleCheck_Tick;
-            _idleCheck.Interval = 500;
+            _idleCheck.Interval = 300;
             _idleCheck.Start();
-        }
+            _ABVRLastInputTime = (uint)Environment.TickCount;
 
+            if (ConfigManager.GeneralConfig.MinimizeToTray)
+            {
+                //ABVR - minimize to tray
+                WindowState = FormWindowState.Minimized;
+                NHTrayIcon.Icon = Properties.Resources.logo;
+                NHTrayIcon.Text = Application.ProductName + " v" + Application.ProductVersion +
+                                   "\nDouble-click to restore..";
+
+                Hide();
+                NHTrayIcon.Visible = true;
+            }
+        }
 
         private void IdleCheck_Tick(object sender, EventArgs e)
         {
-            if (!ConfigManager.GeneralConfig.StartMiningWhenIdle || _isManuallyStarted) return;
+            var NewInputTime = Helpers.GetLastInputTime();
 
-            var msIdle = Helpers.GetIdleTime();
-
-            if (_minerStatsCheck.Enabled)
+            if (_minerStatsCheck.Enabled) //if we are mining
             {
-                if (msIdle < (ConfigManager.GeneralConfig.MinIdleSeconds * 1000))
+                if (Helpers.IsCompInVR())
                 {
                     StopMining();
-                    Helpers.ConsolePrint("NICEHASH", "Resumed from idling");
+                    Helpers.ConsolePrint("ABVR", "Stopped mining - started VR mode");
+                    ShowNotProfitable("NOT MINING - USING VR");
+                    return;
                 }
-            }
-            else
-            {
-                if (_benchmarkForm == null && (msIdle > (ConfigManager.GeneralConfig.MinIdleSeconds * 1000)))
+
+                if (Helpers.IsLightmassRunning())
                 {
-                    Helpers.ConsolePrint("NICEHASH", "Entering idling state");
-                    if (StartMining(false) != StartMiningReturnType.StartMining)
+                    StopMining();
+                    Helpers.ConsolePrint("ABVR", "Stopped mining - started building lightmass");
+                    ShowNotProfitable("NOT MINING - UNREALLIGHTMASS RUNNING");
+                    return;
+                }
+
+                if (_isManuallyStarted) return;
+
+                if (!ConfigManager.GeneralConfig.StartMiningWhenIdle)
+                {
+                    ShowNotProfitable("NOT MINING - IDLE SETTING NOT CHECKED");
+                    return;
+                }
+
+                HideNotProfitable();
+
+                if (NewInputTime != _lastInputTime) //there's an input
+                {
+                    Helpers.ConsolePrint("ABVR", "New Input: " + NewInputTime.ToString() + "    Last Input Time: " + _lastInputTime.ToString());
+                    _numInputsInDur++;
+
+                    if (_numInputsInDur == 1) //if it's the first input, might not be a user (UE4 seems to throw interactions every 50 seconds)
                     {
-                        StopMining();
+                        _multiInteractionLoopCounter = 0;
+                        _idleCheck.Interval = 100;
+                    }
+                    else //we had an input already, trying to see if this is actually a user
+                    {
+                        _multiInteractionLoopCounter += _idleCheck.Interval; //add time to the loop counter
+
+                        if (_numInputsInDur >= 3) //if we have 3 interactions during the loop, stop mining
+                        {
+                            StopMining();
+                            Helpers.ConsolePrint("NICEHASH", "Resumed from idle");
+                            ShowNotProfitable("NOT MINING - COMPUTER IN USE");
+
+                            if (Visible == true)
+                            {
+                                //MessageBox.Show("INPUT HAPPENED");
+                            }
+
+                            _multiInteractionLoopCounter = 0;
+                            _idleCheck.Interval = 300;
+                            _numInputsInDur = 0;
+                            _ABVRLastInputTime = NewInputTime;
+                        }
+                    }
+                }
+                else //no input this round
+                {
+                    if (_numInputsInDur != 0) //only check if we've already had an input
+                    {
+                        _multiInteractionLoopCounter += _idleCheck.Interval; //add time to the loop counter
+
+                        if (_multiInteractionLoopCounter >= 1000) //if only a single interaction in this time, we don't care
+                        {
+                            //reset everything, not a user interaction
+                            _multiInteractionLoopCounter = 0;
+                            _idleCheck.Interval = 300;
+                            _numInputsInDur = 0;
+                        }
                     }
                 }
             }
+            else //currently not mining
+            {
+               if (label_NotProfitable.Text == "NOT MINING - USING VR" && !Helpers.IsCompInVR())
+                {
+                    HideNotProfitable();
+                    Helpers.ConsolePrint("ABVR", "VR ended, resume mining or waiting for idle");
+                    ShowNotProfitable("NOT MINING - COMPUTER IN USE");
+
+                    if (_isManuallyStarted) //if it was previously manually started, start it again
+                    {
+                        HideNotProfitable();
+                        if (StartMining(true) == StartMiningReturnType.ShowNoMining)
+                        {
+                            ShowNotProfitable("NOT MINING - ERROR STARTING");
+                            _isManuallyStarted = false;
+                            StopMining();
+                        }
+                    }
+                }
+
+                if (label_NotProfitable.Text == "NOT MINING - UNREALLIGHTMASS RUNNING" && !Helpers.IsLightmassRunning())
+                {
+                    HideNotProfitable();
+                    Helpers.ConsolePrint("ABVR", "Lightmass ended, resume mining or waiting for idle");
+                    ShowNotProfitable("NOT MINING - COMPUTER IN USE");
+
+                    if (_isManuallyStarted) //if it was previously manually started, start it again
+                    {
+                        HideNotProfitable();
+                        if (StartMining(true) == StartMiningReturnType.ShowNoMining)
+                        {
+                            ShowNotProfitable("NOT MINING - ERROR STARTING");
+                            _isManuallyStarted = false;
+                            StopMining();
+                        }
+                    }
+                }
+
+                if (_isManuallyStarted) return;
+                else if (!ConfigManager.GeneralConfig.StartMiningWhenIdle)
+                {
+                    ShowNotProfitable("NOT MINING - IDLE SETTING NOT CHECKED");
+                    return;
+                }
+                else if (Helpers.IsCompInVR())
+                {
+                    _ABVRLastInputTime = (uint)Environment.TickCount;
+                    ShowNotProfitable("NOT MINING - USING VR");
+                    return;
+                }
+                else if (Helpers.IsLightmassRunning())
+                {
+                    _ABVRLastInputTime = (uint)Environment.TickCount;
+                    ShowNotProfitable("NOT MINING - UNREALLIGHTMASS RUNNING");
+                    return;
+                }
+
+                ShowNotProfitable("NOT MINING - COMPUTER IN USE");
+
+                if (NewInputTime != _lastInputTime) //there's an input
+                {
+                    _numInputsInDur++;
+
+                    if (_numInputsInDur == 1) //if it's the first input, might not be a user (UE4 seems to throw interactions every 50 seconds)
+                    {
+                        _multiInteractionLoopCounter = 0;
+                        _idleCheck.Interval = 100;
+                    }
+                    else //we had an input already, trying to see if this is actually a user
+                    {
+                        _multiInteractionLoopCounter += _idleCheck.Interval; //add time to the loop counter
+
+                        if (_numInputsInDur >= 3) //if we have 3 interactions during the loop, stop mining
+                        {
+                            //reset everything, yes a user interaction
+                            _multiInteractionLoopCounter = 0;
+                            _idleCheck.Interval = 300;
+                            _numInputsInDur = 0;
+                            _ABVRLastInputTime = NewInputTime;
+
+                            if (Visible == true)
+                            {
+                                //MessageBox.Show("INPUT HAPPENED");
+                            }
+                        }
+                    }
+                }
+                else //no input this round
+                {                    
+                    if (_numInputsInDur != 0) //only check if we've already had an input
+                    {
+                        _multiInteractionLoopCounter += _idleCheck.Interval; //add time to the loop counter
+
+                        if (_multiInteractionLoopCounter >= 1000) //if only a single interaction in this time, we don't care
+                        {
+                            //reset everything, not a user interaction
+                            _multiInteractionLoopCounter = 0;
+                            _idleCheck.Interval = 300;
+                            _numInputsInDur = 0;
+                        }
+                    }
+
+                    if (_benchmarkForm == null && (((uint)Environment.TickCount - _ABVRLastInputTime) > (ConfigManager.GeneralConfig.MinIdleSeconds * 1000)))
+                    {
+                        Helpers.ConsolePrint("NICEHASH", "Entering idle state");
+                        HideNotProfitable();
+                        if (StartMining(false) != StartMiningReturnType.StartMining)
+                        {
+                            ShowNotProfitable("NOT MINING - ERROR STARTING");
+                            StopMining();
+                        }
+                    }
+                }
+            }
+
+            /*DebugBox.Text = _numInputsInDur.ToString();
+            textBox1.Text = NewInputTime.ToString();
+            textBox2.Text = _lastInputTime.ToString();
+            textBox3.Text = _ABVRLastInputTime.ToString();
+            textBox4.Text = _multiInteractionLoopCounter.ToString();
+            */
+            _lastInputTime = NewInputTime;
         }
 
         // This is a single shot _benchmarkTimer
@@ -272,6 +473,8 @@ namespace NiceHashMiner
             }
 
             // Query Avaliable ComputeDevices
+
+
             ComputeDeviceManager.Query.QueryDevices(_loadingScreen);
             _isDeviceDetectionInitialized = true;
 
@@ -438,13 +641,17 @@ namespace NiceHashMiner
                 Helpers.InstallVcRedist();
             }
 
+            ShowNotProfitable("NOT MINING - COMPUTER IN USE");
+
 
             if (ConfigManager.GeneralConfig.AutoStartMining)
             {
                 // well this is started manually as we want it to start at runtime
                 _isManuallyStarted = true;
+                HideNotProfitable();
                 if (StartMining(true) != StartMiningReturnType.StartMining)
                 {
+                    ShowNotProfitable("NOT MINING - ERROR STARTING");
                     _isManuallyStarted = false;
                     StopMining();
                 }
@@ -455,6 +662,22 @@ namespace NiceHashMiner
         {
             form.StartPosition = FormStartPosition.Manual;
             form.Location = new Point(Location.X + (Width - form.Width) / 2, Location.Y + (Height - form.Height) / 2);
+        }
+
+        private void Form_Main_Load(object sender, EventArgs e)
+        {
+            if (ConfigManager.GeneralConfig.MinimizeToTray) //do all this stuff here so that it's not shown
+            {
+                // general loading indicator
+                const int totalLoadSteps = 11;
+                _loadingScreen = new Form_Loading(this,
+                    International.GetText("Form_Loading_label_LoadingText"),
+                    International.GetText("Form_Main_loadtext_CPU"), totalLoadSteps);
+                SetChildFormCenter(_loadingScreen);
+
+                _loadingScreen.Hide();
+                Hide();
+            }
         }
 
         private void Form_Main_Shown(object sender, EventArgs e)
@@ -523,7 +746,7 @@ namespace NiceHashMiner
 
         private void InitFlowPanelStart()
         {
-            flowLayoutPanelRates.Controls.Clear();
+           flowLayoutPanelRates.Controls.Clear();
             // add for every cdev a 
             foreach (var cdev in ComputeDeviceManager.Avaliable.AllAvaliableDevices)
             {
@@ -885,10 +1108,12 @@ namespace NiceHashMiner
         private void ButtonStartMining_Click(object sender, EventArgs e)
         {
             _isManuallyStarted = true;
+            HideNotProfitable();
             if (StartMining(true) == StartMiningReturnType.ShowNoMining)
             {
                 _isManuallyStarted = false;
                 StopMining();
+                ShowNotProfitable("NOT MINING - ERROR STARTING");
                 MessageBox.Show(International.GetText("Form_Main_StartMiningReturnedFalse"),
                     International.GetText("Warning_with_Exclamation"),
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -963,23 +1188,23 @@ namespace NiceHashMiner
         // Minimize to system tray if MinimizeToTray is set to true
         private void Form1_Resize(object sender, EventArgs e)
         {
-            notifyIcon1.Icon = Properties.Resources.logo;
-            notifyIcon1.Text = Application.ProductName + " v" + Application.ProductVersion +
-                               "\nDouble-click to restore..";
+            //NHTrayIcon.Icon = Properties.Resources.logo;
+            //NHTrayIcon.Text = Application.ProductName + " v" + Application.ProductVersion +
+            //                   "\nDouble-click to restore..";
 
             if (ConfigManager.GeneralConfig.MinimizeToTray && FormWindowState.Minimized == WindowState)
             {
-                notifyIcon1.Visible = true;
+                NHTrayIcon.Visible = true;
                 Hide();
             }
         }
 
         // Restore NiceHashMiner from the system tray
-        private void NotifyIcon1_DoubleClick(object sender, EventArgs e)
+        private void NHTrayIcon_DoubleClick(object sender, EventArgs e)
         {
             Show();
             WindowState = FormWindowState.Normal;
-            notifyIcon1.Visible = false;
+            //NHTrayIcon.Visible = false;
         }
 
         ///////////////////////////////////////
