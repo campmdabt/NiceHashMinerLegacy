@@ -1,5 +1,5 @@
-﻿using NiceHashMiner.Enums;
-using System;
+﻿using System;
+using NiceHashMinerLegacy.Common.Enums;
 
 namespace NiceHashMiner
 {
@@ -10,8 +10,8 @@ namespace NiceHashMiner
     {
         public static string GetName(AlgorithmType type)
         {
-            if ((AlgorithmType.INVALID <= type && type <= AlgorithmType.Skunk) ||
-                (AlgorithmType.DaggerSia <= type && type <= AlgorithmType.DaggerPascal))
+            if ((AlgorithmType.INVALID <= type && type <= AlgorithmType.X16R) ||
+                (AlgorithmType.DaggerKeccak <= type && type <= AlgorithmType.DaggerPascal))
             {
                 return Enum.GetName(typeof(AlgorithmType), type);
             }

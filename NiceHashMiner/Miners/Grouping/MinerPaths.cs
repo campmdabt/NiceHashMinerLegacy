@@ -1,9 +1,11 @@
 ﻿using NiceHashMiner.Configs.ConfigJsonFile;
 using NiceHashMiner.Devices;
-using NiceHashMiner.Enums;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using NiceHashMiner.Algorithms;
+using NiceHashMiner.Devices.Algorithms;
+using NiceHashMinerLegacy.Common.Enums;
 
 namespace NiceHashMiner.Miners.Grouping
 {
@@ -91,12 +93,18 @@ namespace NiceHashMiner.Miners.Grouping
 
             public const string SgminerGm = Bin + @"\sgminer-gm\sgminer.exe";
 
+            public const string Avermore = Bin + @"\avermore\sgminer.exe";
+
             public const string NhEqMiner = Bin + @"\nheqminer_v0.4b\NhEqMiner.exe";
             public const string Excavator = Bin + @"\excavator\excavator.exe";
 
             public const string XmrStackCpuMiner = Bin + @"\xmr-stak-cpu\xmr-stak-cpu.exe";
             public const string XmrStakAmd = Bin + @"\xmr-stak-amd\xmr-stak-amd.exe";
+            public const string XmrStak = Bin + @"\xmr-stak\xmr-stak.exe";
             public const string Xmrig = Bin + @"\xmrig\xmrig.exe";
+            public const string XmrStakHeavy = Bin + @"\xmr-stak_heavy\xmr-stak.exe";
+
+            public const string CpuMiner = Bin + @"\cpuminer_opt\cpuminer.exe";
 
             public const string None = "";
 
@@ -105,9 +113,6 @@ namespace NiceHashMiner.Miners.Grouping
 
             public const string ClaymoreZcashMiner = Bin3rdParty + @"\claymore_zcash\ZecMiner64.exe";
             public const string ClaymoreCryptoNightMiner = Bin3rdParty + @"\claymore_cryptonight\NsGpuCNMiner.exe";
-
-            public const string ClaymoreCryptoNightMinerOld =
-                Bin3rdParty + @"\claymore_cryptonight_old\NsGpuCNMiner.exe";
 
             public const string OptiminerZcashMiner = Bin3rdParty + @"\optiminer_zcash_win\Optiminer.exe";
             public const string ClaymoreDual = Bin3rdParty + @"\claymore_dual\EthDcrMiner64.exe";
@@ -141,6 +146,10 @@ namespace NiceHashMiner.Miners.Grouping
                     Helpers.ConsolePrint("PATHS", $"Path {path.Path} not found, using defaults");
                 }
             }
+            // Temp workaround
+            if (minerBaseType == MinerBaseType.XmrStak && algoType == AlgorithmType.CryptoNightHeavy)
+                return Data.XmrStakHeavy;
+
             switch (minerBaseType)
             {
                 case MinerBaseType.ccminer:
@@ -155,10 +164,10 @@ namespace NiceHashMiner.Miners.Grouping
                     return AmdGroup.ClaymorePath(algoType);
                 case MinerBaseType.OptiminerAMD:
                     return Data.OptiminerZcashMiner;
-                case MinerBaseType.excavator:
-                    return Data.Excavator;
-                case MinerBaseType.XmrStackCPU:
-                    return Data.XmrStackCpuMiner;
+                //case MinerBaseType.excavator:
+                //    return Data.Excavator;
+                case MinerBaseType.XmrStak:
+                    return Data.XmrStak;
                 case MinerBaseType.ccminer_alexis:
                     return NvidiaGroups.CcminerUnstablePath(algoType, devGroupType);
                 case MinerBaseType.experimental:
@@ -169,12 +178,10 @@ namespace NiceHashMiner.Miners.Grouping
                     return Data.Prospector;
                 case MinerBaseType.Xmrig:
                     return Data.Xmrig;
-                case MinerBaseType.XmrStakAMD:
-                    return Data.XmrStakAmd;
-                case MinerBaseType.Claymore_old:
-                    return Data.ClaymoreCryptoNightMinerOld;
                 case MinerBaseType.dtsm:
                     return Data.Dtsm;
+                case MinerBaseType.cpuminer:
+                    return Data.CpuMiner;
             }
             return Data.None;
         }
@@ -252,6 +259,8 @@ namespace NiceHashMiner.Miners.Grouping
                     case AlgorithmType.Blake2s:
                     case AlgorithmType.Skunk:
                     case AlgorithmType.Keccak:
+                    case AlgorithmType.Lyra2z:
+                    case AlgorithmType.X16R:
                         return Data.CcminerTPruvot;
                     case AlgorithmType.Sia:
                     case AlgorithmType.Nist5:
@@ -298,11 +307,16 @@ namespace NiceHashMiner.Miners.Grouping
         {
             public static string SgminerPath(AlgorithmType type)
             {
-                if (AlgorithmType.CryptoNight == type || AlgorithmType.DaggerHashimoto == type)
+                switch (type)
                 {
-                    return Data.SgminerGm;
+                    case AlgorithmType.CryptoNight:
+                    case AlgorithmType.DaggerHashimoto:
+                        return Data.SgminerGm;
+                    case AlgorithmType.X16R:
+                        return Data.Avermore;
+                    default:
+                        return Data.Sgminer560General;
                 }
-                return Data.Sgminer560General;
             }
 
             public static string ClaymorePath(AlgorithmType type)
@@ -311,12 +325,13 @@ namespace NiceHashMiner.Miners.Grouping
                 {
                     case AlgorithmType.Equihash:
                         return Data.ClaymoreZcashMiner;
-                    case AlgorithmType.CryptoNight:
+                    case AlgorithmType.CryptoNightV7:
                         return Data.ClaymoreCryptoNightMiner;
                     case AlgorithmType.DaggerHashimoto:
                         return Data.ClaymoreDual;
+                    default:
+                        return Data.None;
                 }
-                return Data.None; // should not happen
             }
         }
 
