@@ -318,7 +318,7 @@ namespace NiceHashMiner
                     if (_isManuallyStarted) //if it was previously manually started, start it again
                     {
                         HideNotProfitable();
-                        if (StartMining(true) == StartMiningReturnType.ShowNoMining)
+                        if (StartMining(false) == StartMiningReturnType.ShowNoMining)
                         {
                             ShowNotProfitable("NOT MINING - ERROR STARTING");
                             _isManuallyStarted = false;
@@ -336,7 +336,7 @@ namespace NiceHashMiner
                     if (_isManuallyStarted) //if it was previously manually started, start it again
                     {
                         HideNotProfitable();
-                        if (StartMining(true) == StartMiningReturnType.ShowNoMining)
+                        if (StartMining(false) == StartMiningReturnType.ShowNoMining)
                         {
                             ShowNotProfitable("NOT MINING - ERROR STARTING");
                             _isManuallyStarted = false;
@@ -649,7 +649,7 @@ namespace NiceHashMiner
                 // well this is started manually as we want it to start at runtime
                 _isManuallyStarted = true;
                 HideNotProfitable();
-                if (StartMining(true) != StartMiningReturnType.StartMining)
+                if (StartMining(false) != StartMiningReturnType.StartMining)
                 {
                     ShowNotProfitable("NOT MINING - ERROR STARTING");
                     _isManuallyStarted = false;
@@ -1252,7 +1252,8 @@ namespace NiceHashMiner
                     MessageBox.Show(International.GetText("Form_Main_msgbox_NullNiceHashDataMsg"),
                         International.GetText("Error_with_Exclamation"),
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+					ShowNotProfitable("NOT MINING - NULL NICE HASH DATA");
+				}
                 return StartMiningReturnType.IgnoreMsg;
             }
 
