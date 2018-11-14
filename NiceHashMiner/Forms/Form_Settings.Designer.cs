@@ -109,6 +109,8 @@
             this.label_displayCurrency = new System.Windows.Forms.Label();
             this.tabPageAdvanced = new System.Windows.Forms.TabPage();
             this.groupBox_Miners = new System.Windows.Forms.GroupBox();
+            this.pictureBox_RunEthlargement = new System.Windows.Forms.PictureBox();
+            this.checkBox_RunEthlargement = new System.Windows.Forms.CheckBox();
             this.pictureBox_MinerRestartDelayMS = new System.Windows.Forms.PictureBox();
             this.pictureBox_APIBindPortStart = new System.Windows.Forms.PictureBox();
             this.pictureBox_SwitchMaxSeconds = new System.Windows.Forms.PictureBox();
@@ -195,6 +197,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_Language)).BeginInit();
             this.tabPageAdvanced.SuspendLayout();
             this.groupBox_Miners.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox_RunEthlargement)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_MinerRestartDelayMS)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_APIBindPortStart)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_SwitchMaxSeconds)).BeginInit();
@@ -1209,6 +1212,8 @@
             // 
             // groupBox_Miners
             // 
+            this.groupBox_Miners.Controls.Add(this.pictureBox_RunEthlargement);
+            this.groupBox_Miners.Controls.Add(this.checkBox_RunEthlargement);
             this.groupBox_Miners.Controls.Add(this.pictureBox_MinerRestartDelayMS);
             this.groupBox_Miners.Controls.Add(this.pictureBox_APIBindPortStart);
             this.groupBox_Miners.Controls.Add(this.pictureBox_SwitchMaxSeconds);
@@ -1247,6 +1252,28 @@
             this.groupBox_Miners.TabIndex = 389;
             this.groupBox_Miners.TabStop = false;
             this.groupBox_Miners.Text = "Miners:";
+            // 
+            // pictureBox_RunEthlargement
+            // 
+            this.pictureBox_RunEthlargement.Image = global::NiceHashMiner.Properties.Resources.info_black_18;
+            this.pictureBox_RunEthlargement.Location = new System.Drawing.Point(555, 121);
+            this.pictureBox_RunEthlargement.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
+            this.pictureBox_RunEthlargement.Name = "pictureBox_RunEthlargement";
+            this.pictureBox_RunEthlargement.Size = new System.Drawing.Size(18, 18);
+            this.pictureBox_RunEthlargement.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.pictureBox_RunEthlargement.TabIndex = 387;
+            this.pictureBox_RunEthlargement.TabStop = false;
+            // 
+            // checkBox_RunEthlargement
+            // 
+            this.checkBox_RunEthlargement.AutoSize = true;
+            this.checkBox_RunEthlargement.Location = new System.Drawing.Point(403, 122);
+            this.checkBox_RunEthlargement.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
+            this.checkBox_RunEthlargement.Name = "checkBox_RunEthlargement";
+            this.checkBox_RunEthlargement.Size = new System.Drawing.Size(111, 17);
+            this.checkBox_RunEthlargement.TabIndex = 386;
+            this.checkBox_RunEthlargement.Text = "Run Ethlargement";
+            this.checkBox_RunEthlargement.UseVisualStyleBackColor = true;
             // 
             // pictureBox_MinerRestartDelayMS
             // 
@@ -1654,6 +1681,7 @@
             // 
             // algorithmsListView1
             // 
+            this.algorithmsListView1.BackColor = System.Drawing.SystemColors.Control;
             this.algorithmsListView1.BenchmarkCalculation = null;
             this.algorithmsListView1.ComunicationInterface = null;
             this.algorithmsListView1.IsInBenchmark = false;
@@ -1804,6 +1832,7 @@
             this.tabPageAdvanced.ResumeLayout(false);
             this.groupBox_Miners.ResumeLayout(false);
             this.groupBox_Miners.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox_RunEthlargement)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_MinerRestartDelayMS)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_APIBindPortStart)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox_SwitchMaxSeconds)).EndInit();
@@ -1952,5 +1981,7 @@
         private System.Windows.Forms.PictureBox pictureBox_ElectricityCost;
         private System.Windows.Forms.TextBox textBox_ElectricityCost;
         private System.Windows.Forms.Label label_ElectricityCost;
+        private System.Windows.Forms.PictureBox pictureBox_RunEthlargement;
+        private System.Windows.Forms.CheckBox checkBox_RunEthlargement;
     }
 }
