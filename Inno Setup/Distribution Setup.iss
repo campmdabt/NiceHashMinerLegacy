@@ -15,13 +15,12 @@
 #define MyAppURL "https://www.atlasbayvr.com/"
 #define MyAppFolder "..\\Release"
 ;#define MyIconPath "..\\Windows\\Application.ico"
-;#define ProjectVersion ReadIni(SourcePath	+ MyAppFolder + "\\" + MyAppNameNoSpace + "\\Content\\Build\\Config\\Build.version","Inno Build Version","ProjectVersion","UNKNOWN")
+#define ProjectVersion GetFileVersion(MyAppFolder + "\\" + MyAppExeName) 
 ;#define UE4FileVersion ReadIni(SourcePath	+ MyAppFolder + "\\" + MyAppNameNoSpace + "\\Content\\Build\\Config\\Build.version","Inno Build Version","UE4SetupFileVersion","UNKNOWN")
-#define SelfFileVersion Int(ReadIni(SourcePath	+ MyAppFolder + "\\" + MyAppNameNoSpace + "\\Content\\Build\\Config\\Build.version","Inno Build Version","SetupFileVersion","0"))
+;#define SelfFileVersion Int(ReadIni(SourcePath	+ MyAppFolder + "\\" + MyAppNameNoSpace + "\\Content\\Build\\Config\\Build.version","Inno Build Version","SetupFileVersion","0"))
+#define SelfFileVersion Int(GetFileVersion(".\\Output\\" + MyAppNameNoSpace + "_" + ProjectVersion))
 #expr SelfFileVersion = SelfFileVersion + 1
 ;#expr WriteIni(SourcePath	+ MyAppFolder + "\\" + MyAppNameNoSpace + "\\Content\\Build\\Config\\Build.version","Inno Build Version","SetupFileVersion", SelfFileVersion)
-;this isn't used currently since the executable file isn't given the correct version number
-;#define MyAppVersion GetFileVersion(AddBackslash(SourcePath) + MyAppExeName) 
 
 [Setup]
 ; ******************** DO THIS PER PROJECT *********************
@@ -35,8 +34,8 @@ CompressionThreads=auto
 VersionInfoVersion={#SelfFileVersion}
 VersionInfoDescription="{#MyAppName} Setup"
 AppName={#MyAppName}
-AppVersion=1
-;AppVersion={#ProjectVersion}
+;AppVersion=1
+AppVersion={#ProjectVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
@@ -44,8 +43,7 @@ AppUpdatesURL={#MyAppURL}
 ;no longer in program files - put it under the C drive
 DefaultDirName={sd}\{#MyAppPublisher}\{#MyAppName}
 DisableProgramGroupPage=yes
-OutputBaseFilename={#MyAppNameNoSpace}
-;_{#ProjectVersion}
+OutputBaseFilename={#MyAppNameNoSpace}_{#ProjectVersion}
 ;SetupIconFile={#MyIconPath}
 Compression=lzma
 SolidCompression=no
@@ -59,8 +57,9 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked;
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
+Name: "tdr"; Description: "Create TDR registry entries"; GroupDescription: "Registry:"; Flags: unchecked
 
 [Files]
 Source: "{#MyAppFolder}\{#MyAppExeName}"; DestDir: "{app}\"; Flags: ignoreversion
@@ -75,7 +74,7 @@ Source: "{#MyAppFolder}\x64\*"; DestDir: "{app}\x64"; Flags: ignoreversion recur
 Source: "{#MyAppFolder}\*.exe"; DestDir: "{app}\"; Flags: ignoreversion 
 Source: "{#MyAppFolder}\*.bat"; DestDir: "{app}\"; Flags: ignoreversion
 Source: "{#MyAppFolder}\*.dll"; DestDir: "{app}\"; Flags: ignoreversion
-Source: "{#MyAppFolder}\*.txt"; DestDir: "{app}\"; Flags: ignoreversion 
+;Source: "{#MyAppFolder}\*.txt"; DestDir: "{app}\"; Flags: ignoreversion 
 Source: "{#MyAppFolder}\*.bat"; DestDir: "{app}\"; Flags: ignoreversion 
 ;Source: "{#MyAppFolder}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ;Source: "{#MyAppFolder}\BroadstoneCourt\Binaries\*"; DestDir: "{app}\BroadstoneCourt\Binaries\"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -90,3 +89,11 @@ Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Fil
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent runascurrentuser
 
+[Registry]
+Root: "HKLM"; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "NiceHash"; ValueData: """C:\Atlas Bay VR\NHML-ABVR\NiceHashMinerLegacy\Release\NiceHashMinerLegacy.exe"""; Flags: dontcreatekey uninsdeletevalue
+Root: "HKLM"; Subkey: "SYSTEM\CurrentControlSet\Control\GraphicsDrivers"; ValueType: dword; ValueName: "TdrDelay"; ValueData: "14"; Flags: uninsdeletevalue; Tasks: tdr
+Root: "HKLM"; Subkey: "SYSTEM\CurrentControlSet\Control\GraphicsDrivers"; ValueType: dword; ValueName: "TdrDdiDelay"; ValueData: "14"; Flags: uninsdeletevalue; Tasks: tdr
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\*"
+Type: filesandordirs; Name: "{app}"
